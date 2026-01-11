@@ -1,7 +1,7 @@
 # tribe
 
 A project of an application that unites people with love to sports
-fuck anastasis
+Git Test
 ## Getting Started
 
 Login with your email and you re ready to start
