@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart'; // Για τον χάρτη
 import 'package:latlong2/latlong.dart';        // Για τις συντεταγμένες
 import 'database_helper.dart';
-import 'package:sqflite/sqflite.dart';
+import 'dart:developer' as developer;
 
 
 void main() => runApp(const TribeApp());
@@ -307,20 +307,20 @@ class _DiscoverTabState extends State<DiscoverTab> {
   }
 
   Future _refreshActivities() async {
-  print("DEBUG: Ξεκινάω φόρτωση..."); // Για να βλέπεις τι γίνεται
+  developer.log("DEBUG: Ξεκινάω φόρτωση...", name: 'DiscoverTab', level: 800); // Για να βλέπεις τι γίνεται
   try {
     final data = await DatabaseHelper.instance.getAllActivities();
-    print("DEBUG: Η βάση απάντησε με ${data.length} εγγραφές.");
+    developer.log("DEBUG: Η βάση απάντησε με ${data.length} εγγραφές.", name: 'DiscoverTab', level: 800);
     
     if (mounted) { // Έλεγχος αν η οθόνη υπάρχει ακόμα
       setState(() {
         _activities = data.map((map) => Activity.fromMap(map)).toList();
       });
     }
-  } catch (e) {
-    print("DEBUG: ΣΦΑΛΜΑ ΒΑΣΗΣ -> $e");
+  } catch (e, st) {
+    developer.log('DEBUG: ΣΦΑΛΜΑ ΒΑΣΗΣ', name: 'DiscoverTab', level: 1000, error: e, stackTrace: st);
   }
-}
+} 
  void _showCreateActivity(BuildContext context) async {
   // 1. Περιμένουμε πρώτα να πάρουμε το αποτέλεσμα από τη φόρμα
   final Activity? newActivity = await showModalBottomSheet<Activity>(
@@ -889,6 +889,17 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
       ),
     ],
   );
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    _playersController.dispose();
+    _dateController.dispose();
+    _timeController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
 }
 
 // ==========================================
@@ -1337,7 +1348,7 @@ class _ProfileTabState extends State<ProfileTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: isCompleted ? Colors.white12 : kPrimaryBlue.withOpacity(0.2),
+              color: isCompleted ? Colors.white12 : kPrimaryBlue.withAlpha((0.2 * 255).round()),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isCompleted ? Colors.white24 : kPrimaryBlue,
@@ -1442,6 +1453,14 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locController.dispose();
+    _bioController.dispose();
+    super.dispose();
   }
 }
 
