@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart'; // Για τον χάρτη
 import 'package:latlong2/latlong.dart';        // Για τις συντεταγμένες
+import 'database_helper.dart';
+import 'package:sqflite/sqflite.dart';
+
 
 void main() => runApp(const TribeApp());
 
@@ -87,7 +90,9 @@ class _MainNavigationState extends State<MainNavigation> {
 // 2. ΟΘΟΝΗ ΛΕΠΤΟΜΕΡΕΙΕΣ CHAT 
 // ==========================================
 class ChatDetailScreen extends StatelessWidget {
-  const ChatDetailScreen({super.key});
+  final Activity activity; // Προσθήκη παραμέτρου
+
+  const ChatDetailScreen({super.key, required this.activity});
 
   @override
   Widget build(BuildContext context) {
@@ -95,10 +100,6 @@ class ChatDetailScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: kBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Row(
           children: [
             const CircleAvatar(
@@ -110,14 +111,14 @@ class ChatDetailScreen extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Παιχνίδι 3x3 στο κέντρο',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    activity.title, // Δυναμικός τίτλος από τη δραστηριότητα
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '4/6 μέλη',
-                    style: TextStyle(fontSize: 12, color: Colors.white38),
+                    '${activity.currentPlayers}/${activity.maxPlayers} μέλη', // Δυναμικά μέλη
+                    style: const TextStyle(fontSize: 12, color: Colors.white38),
                   ),
                 ],
               ),
@@ -132,10 +133,10 @@ class ChatDetailScreen extends StatelessWidget {
               color: kPrimaryBlue,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'Μπάσκετ',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                activity.sportCategory, // Δυναμικό άθλημα
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -143,7 +144,6 @@ class ChatDetailScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // --- ΕΔΩ ΕΙΝΑΙ Η ΑΛΛΑΓΗ ΣΤΗ ΜΠΑΡΑ ---
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(12),
@@ -152,192 +152,21 @@ class ChatDetailScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.calendar_today, size: 16, color: kPrimaryBlue),
                 const SizedBox(width: 8),
-                const Text(
-                  'Σάββατο 18/11, 18:00',
-                  style: TextStyle(fontSize: 13, color: Colors.white70),
+                Text(
+                  '${activity.date}, ${activity.time}', // Δυναμική ημερομηνία/ώρα
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
                 ),
-                
                 const Spacer(),
-
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MapScreen(),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    children: const [
-                      Icon(
-                        Icons.location_on, 
-                        size: 16,
-                        color: Colors.redAccent, 
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Γήπεδα Αλεξάνδρου',
-                        style: TextStyle(
-                          fontSize: 13, 
-                          color: Colors.white, 
-                          decoration: TextDecoration.underline, 
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // ------------------------------------
-
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildReceivedMessage(
-                  'Μαρία Κωνσταντίνου',
-                  'Για σας! Χαίρομαι που μπήκατε στην ομάδα!',
-                  '14:16',
-                ),
-                _buildReceivedMessage(
-                  'Νίκος Παπαδάκης',
-                  'Ευχαριστούμε! Ανυπομονούμε για το παιχνίδι.',
-                  '14:18',
-                ),
-                _buildSentMessage(
-                  'Χαίρομαι που είμαι μέλος της ομάδας!',
-                  '14:20',
-                ),
-                _buildReceivedMessage(
-                  'Μαρία Κωνσταντίνου',
-                  'Θα φέρω μπάλα!',
-                  '14:23',
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Γράψε ένα μήνυμα...',
-                      filled: true,
-                      fillColor: kInputFillColor,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: kPrimaryBlue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReceivedMessage(String user, String text, String time) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white10,
-            child: Icon(Icons.person, size: 16),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                const Icon(Icons.location_on, size: 16, color: Colors.redAccent),
+                const SizedBox(width: 4),
                 Text(
-                  user,
-                  style: const TextStyle(fontSize: 12, color: Colors.white38),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: kIncomingChatColor,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
-                    ),
-                  ),
-                  child: Text(text),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: const TextStyle(fontSize: 10, color: Colors.white24),
+                  activity.location.split('(').first, // Δυναμική τοποθεσία
+                  style: const TextStyle(fontSize: 13, color: Colors.white, decoration: TextDecoration.underline),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSentMessage(String text, String time) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: kPrimaryBlue,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    text,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: const TextStyle(fontSize: 10, color: Colors.white24),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: kPrimaryBlue,
-            child: Icon(Icons.person, size: 16, color: Colors.white),
-          ),
+          const Expanded(child: Center(child: Text("Εδώ θα εμφανίζονται τα μηνύματα της ομάδας"))),
         ],
       ),
     );
@@ -409,10 +238,23 @@ class ChatTab extends StatelessWidget {
   Widget _buildChatItem(BuildContext context, String title, String subtitle, String time, bool isUnread) {
     return ListTile(
       onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ChatDetailScreen(), 
-        ),
+       context,
+    MaterialPageRoute(
+    builder: (context) => ChatDetailScreen(
+      // Στέλνουμε dummy δεδομένα για το παράδειγμα στη λίστα Chat
+      activity: Activity(
+        userName: 'Admin',
+        sportCategory: 'Μπάσκετ',
+        title: title, 
+        date: 'Σήμερα',
+        time: time,
+        location: 'Γήπεδο',
+        description: '',
+        maxPlayers: 10,
+        currentPlayers: 5,
+      ),
+    ),
+  ),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
       leading: const CircleAvatar(
@@ -447,23 +289,62 @@ class ChatTab extends StatelessWidget {
 // ==========================================
 // 4. DISCOVER TAB 
 // ==========================================
-class DiscoverTab extends StatelessWidget {
+class DiscoverTab extends StatefulWidget {
   const DiscoverTab({super.key});
+
+  @override
+  State<DiscoverTab> createState() => _DiscoverTabState();
+}
+
+class _DiscoverTabState extends State<DiscoverTab> {
+  // Η λίστα με τις δραστηριότητες
+  List<Activity> _activities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshActivities(); // Φορτώνει τα δεδομένα μόλις ανοίξει η εφαρμογή
+  }
+
+  Future _refreshActivities() async {
+  print("DEBUG: Ξεκινάω φόρτωση..."); // Για να βλέπεις τι γίνεται
+  try {
+    final data = await DatabaseHelper.instance.getAllActivities();
+    print("DEBUG: Η βάση απάντησε με ${data.length} εγγραφές.");
+    
+    if (mounted) { // Έλεγχος αν η οθόνη υπάρχει ακόμα
+      setState(() {
+        _activities = data.map((map) => Activity.fromMap(map)).toList();
+      });
+    }
+  } catch (e) {
+    print("DEBUG: ΣΦΑΛΜΑ ΒΑΣΗΣ -> $e");
+  }
+}
+ void _showCreateActivity(BuildContext context) async {
+  // 1. Περιμένουμε πρώτα να πάρουμε το αποτέλεσμα από τη φόρμα
+  final Activity? newActivity = await showModalBottomSheet<Activity>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const CreateActivitySheet(),
+  );
+
+  // 2. Ελέγχουμε αν όντως δημιουργήθηκε νέα δραστηριότητα
+  if (newActivity != null) {
+    // Αποθήκευση στη βάση δεδομένων
+    await DatabaseHelper.instance.insertActivity(newActivity.toMap());
+    
+    // Ανανέωση της λίστας που βλέπουμε στην οθόνη από τη βάση
+    _refreshActivities();
+  }
+}
 
   void _showFilters(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => const SportsFiltersSheet(),
-    );
-  }
-
-  void _showCreateActivity(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const CreateActivitySheet(),
     );
   }
 
@@ -496,79 +377,54 @@ class DiscoverTab extends StatelessWidget {
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () => _showCreateActivity(context),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Ανακάλυψε\nΔραστηριότητες',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
+                    Text('Ανακάλυψε\nΔραστηριότητες', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                     SizedBox(height: 4),
-                    Text(
-                      'Βρες την επόμενη περιπέτεια',
-                      style: TextStyle(color: Colors.white60, fontSize: 13),
-                    ),
+                    Text('Βρες την επόμενη περιπέτεια', style: TextStyle(color: Colors.white60, fontSize: 13)),
                   ],
                 ),
-              ),
-              
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2E),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: IconButton(
+                IconButton(
                   icon: const Icon(Icons.tune, color: kPrimaryBlue),
-                  tooltip: "Φίλτρα",
                   onPressed: () => _showFilters(context),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          
-          const SizedBox(height: 24),
-          
-          const ActivityCard(
-            userName: 'Γιώργος Παπαδόπουλος',
-            sportCategory: 'Ποδόσφαιρο',
-            title: 'Ψάχνω ομάδα για 5x5',
-            date: 'Κυριακή 17/11',
-            time: '10:00',
-            location: 'Γήπεδο Καλαμαριάς\nΛεωφ. Στρατού 45, Καλαμαριά',
-            price: '5€ ανά άτομο',
-            description: 'Ψάχνουμε άτομα για φιλικό παιχνίδι. Όλα τα επίπεδα είναι ευπρόσδεκτα!',
-            currentPlayers: 3,
-            maxPlayers: 10,
-          ),
-
-          const ActivityCard(
-            userName: 'Μαρία Κωνσταντίνου',
-            sportCategory: 'Μπάσκετ',
-            title: 'Παιχνίδι 3x3 στο κέντρο',
-            date: 'Σάββατο 16/11',
-            time: '18:00',
-            location: 'Γήπεδο Αλεξάνδρου\nΠλατεία Αλεξάνδρας, Αθήνα',
-            price: 'Δωρεάν',
-            description: 'Χαλαρό μπασκετάκι το απόγευμα. Φέρτε νερά!',
-            currentPlayers: 5,
-            maxPlayers: 6,
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _activities.length,
+              itemBuilder: (context, index) {
+                final act = _activities[index];
+                return ActivityCard(
+                  userName: act.userName,
+                  sportCategory: act.sportCategory,
+                  title: act.title,
+                  date: act.date,
+                  time: act.time,
+                  location: act.location,
+                  price: 'Δωρεάν', 
+                  description: act.description,
+                  currentPlayers: act.currentPlayers,
+                  maxPlayers: act.maxPlayers,
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 }
-
 // ==========================================
 // WIDGET: ΤΑ ΦΙΛΤΡΑ (SportsFiltersSheet) - ΔΙΟΡΘΩΜΕΝΟ SCROLL
 // ==========================================
@@ -717,9 +573,8 @@ class _SportsFiltersSheetState extends State<SportsFiltersSheet> {
     );
   }
 }
-
 // ==========================================
-// 8. ΔΗΜΙΟΥΡΓΙΑ ΔΡΑΣΤΗΡΙΟΤΗΤΑΣ (Με Pickers & Map)
+// ΔΗΜΙΟΥΡΓΙΑ ΔΡΑΣΤΗΡΙΟΤΗΤΑΣ (ΔΙΟΡΘΩΜΕΝΟ)
 // ==========================================
 class CreateActivitySheet extends StatefulWidget {
   const CreateActivitySheet({super.key});
@@ -729,13 +584,17 @@ class CreateActivitySheet extends StatefulWidget {
 }
 
 class _CreateActivitySheetState extends State<CreateActivitySheet> {
+  // Controllers για να διαβάζουμε το κείμενο
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _playersController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   
   String? selectedSport;
-  LatLng? selectedCoordinates; 
-
+  
+  // Λίστα αθλημάτων
   final List<String> sports = [
     'Ποδόσφαιρο', 'Μπάσκετ', 'Τένις', 'Βόλεϊ', 'Yoga', 'Άλλα',
   ];
@@ -754,7 +613,8 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
               onPrimary: Colors.white,
               surface: kCardColor,
               onSurface: Colors.white,
-            ), dialogTheme: DialogThemeData(backgroundColor: kCardColor),
+            ),
+            dialogTheme: const DialogThemeData(backgroundColor: kCardColor),
           ),
           child: child!,
         );
@@ -804,8 +664,7 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
 
     if (result != null) {
       setState(() {
-        selectedCoordinates = result;
-        _locationController.text = "Επιλεγμένη Τοποθεσία (${result.latitude.toStringAsFixed(3)}, ${result.longitude.toStringAsFixed(3)})";
+        _locationController.text = "Τοποθεσία (${result.latitude.toStringAsFixed(3)}, ${result.longitude.toStringAsFixed(3)})";
       });
     }
   }
@@ -834,21 +693,18 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                'Συμπληρώστε τα στοιχεία για τη νέα αθλητική δραστηριότητα',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white38, fontSize: 13),
-              ),
-            ),
             const SizedBox(height: 24),
             
             _buildLabel("Άθλημα *"),
             _buildDropdown(),
             
             const SizedBox(height: 16),
-            _buildFormTextField(label: "Τίτλος *", hint: "π.χ. Ψάχνω ομάδα για 5x5"),
+            // ΣΥΝΔΕΣΑΜΕ TON CONTROLLER
+            _buildFormTextField(
+              label: "Τίτλος *", 
+              hint: "π.χ. Ψάχνω ομάδα για 5x5",
+              controller: _titleController, 
+            ),
             
             const SizedBox(height: 16),
             Row(
@@ -878,7 +734,6 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
             ),
             
             const SizedBox(height: 16),
-            
             _buildFormTextField(
               label: "Τοποθεσία (Πάτησε για χάρτη) *",
               hint: "Επίλεξε στο χάρτη...",
@@ -887,9 +742,6 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
               icon: Icons.map,
               onTap: _pickLocation,
             ),
-            
-            const SizedBox(height: 16),
-            _buildFormTextField(label: "Διεύθυνση (Προαιρετικό)", hint: "π.χ. Λεωφ. Στρατού 45"),
             
             const SizedBox(height: 16),
             Row(
@@ -903,9 +755,11 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
+                  // ΣΥΝΔΕΣΑΜΕ TON CONTROLLER ΓΙΑ ΤΑ ΑΤΟΜΑ
                   child: _buildFormTextField(
                     label: "Μέγιστα Άτομα *",
                     hint: "π.χ. 10",
+                    controller: _playersController,
                     keyboardType: TextInputType.number,
                   ),
                 ),
@@ -913,9 +767,11 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
             ),
             
             const SizedBox(height: 16),
+            // ΣΥΝΔΕΣΑΜΕ TON CONTROLLER ΓΙΑ ΤΗΝ ΠΕΡΙΓΡΑΦΗ
             _buildFormTextField(
               label: "Περιγραφή",
               hint: "Πες μας περισσότερα...",
+              controller: _descController,
               maxLines: 3,
             ),
             
@@ -935,8 +791,28 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
+                    // === ΕΔΩ ΕΙΝΑΙ Η ΔΙΟΡΘΩΣΗ ===
                     onPressed: () {
-                      Navigator.pop(context);
+                      // 1. Έλεγχος αν συμπληρώθηκαν τα βασικά
+                      if (_titleController.text.isEmpty || selectedSport == null) {
+                        return; // Ή δείξε ένα μήνυμα λάθους
+                      }
+
+                      // 2. Δημιουργία του αντικειμένου Activity
+                      final newActivity = Activity(
+                        userName: 'Εγώ', // Dummy όνομα χρήστη
+                        sportCategory: selectedSport!,
+                        title: _titleController.text,
+                        date: _dateController.text.isEmpty ? 'Σήμερα' : _dateController.text,
+                        time: _timeController.text.isEmpty ? '12:00' : _timeController.text,
+                        location: _locationController.text.isEmpty ? 'Άγνωστη τοποθεσία' : _locationController.text,
+                        description: _descController.text,
+                        maxPlayers: int.tryParse(_playersController.text) ?? 10,
+                        currentPlayers: 1, // Ξεκινάει με 1 άτομο (εσένα)
+                      );
+
+                      // 3. Επιστροφή των δεδομένων πίσω στην προηγούμενη οθόνη
+                      Navigator.pop(context, newActivity);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kPrimaryBlue,
@@ -994,7 +870,7 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
     children: [
       _buildLabel(label),
       TextField(
-        controller: controller,
+        controller: controller, // Σύνδεση του controller
         readOnly: readOnly,
         onTap: onTap,
         maxLines: maxLines,
@@ -1016,7 +892,7 @@ class _CreateActivitySheetState extends State<CreateActivitySheet> {
 }
 
 // ==========================================
-// 9. LOCATION PICKER MAP (ΝΕΟ WIDGET)
+// LOCATION PICKER MAP (ΝΕΟ WIDGET)
 // ==========================================
 class LocationPicker extends StatefulWidget {
   const LocationPicker({super.key});
@@ -1238,10 +1114,36 @@ class ProfileTab extends StatefulWidget {
 }
 
 class _ProfileTabState extends State<ProfileTab> {
-  String name = 'Γιάννης Παπαδόπουλος';
-  String location = 'Θεσσαλονίκη, Ελλάδα';
-  String bio = 'Λάτρης του αθλητισμού και της ομαδικής δουλειάς! ⚽🏀';
+  // Αρχικές τιμές που θα αντικατασταθούν από τη βάση
+  String name = 'Φορτώνει...';
+  String location = '...';
+  String bio = '...';
 
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile(); // Κλήση της μεθόδου για φόρτωση από τη βάση
+  }
+
+  // Μέθοδος που διαβάζει το προφίλ από τη βάση δεδομένων
+  Future<void> _loadProfile() async {
+    final profileData = await DatabaseHelper.instance.getProfile();
+    if (profileData != null) {
+      setState(() {
+        name = profileData['name'] ?? 'Γιάννης Παπαδόπουλος';
+        location = profileData['location'] ?? 'Θεσσαλονίκη, Ελλάδα';
+        bio = profileData['bio'] ?? 'Λάτρης του αθλητισμού!';
+      });
+    } else {
+      setState(() {
+        name = 'Γιάννης Παπαδόπουλος';
+        location = 'Θεσσαλονίκη, Ελλάδα';
+        bio = 'Λάτρης του αθλητισμού!';
+      });
+    }
+  } // <--- Εδώ κλείνει σωστά η _loadProfile
+
+  // Η μέθοδος πρέπει να είναι ξεχωριστή μέσα στην κλάση
   void _showEditProfile(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -1251,11 +1153,17 @@ class _ProfileTabState extends State<ProfileTab> {
         currentName: name,
         currentLocation: location,
         currentBio: bio,
-        onSave: (newName, newLoc, newBio) {
+        onSave: (newName, newLoc, newBio) async {
           setState(() {
             name = newName;
             location = newLoc;
             bio = newBio;
+          });
+          await DatabaseHelper.instance.saveProfile({
+            'id': 1,
+            'name': newName,
+            'location': newLoc,
+            'bio': newBio,
           });
         },
       ),
@@ -2087,7 +1995,21 @@ class _ActivityCardState extends State<ActivityCard> {
         if (isJoined) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const ChatDetailScreen()),
+     MaterialPageRoute(
+      builder: (context) => ChatDetailScreen(
+        activity: Activity(
+          userName: widget.userName,
+          sportCategory: widget.sportCategory,
+          title: widget.title,
+          date: widget.date,
+          time: widget.time,
+          location: widget.location,
+          description: widget.description,
+          maxPlayers: widget.maxPlayers,
+          currentPlayers: displayedPlayers,
+        ),
+      ),
+    ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -2251,6 +2173,62 @@ class _ActivityCardState extends State<ActivityCard> {
           ),
         ),
       ],
+    );
+  }
+}
+// === Η ΜΟΝΑΔΙΚΗ ΚΛΑΣΗ ACTIVITY ===
+class Activity {
+  final int? id; 
+  final String userName;
+  final String sportCategory;
+  final String title;
+  final String date;
+  final String time;
+  final String location;
+  final String description;
+  final int maxPlayers;
+  int currentPlayers;
+
+  Activity({
+    this.id,
+    required this.userName,
+    required this.sportCategory,
+    required this.title,
+    required this.date,
+    required this.time,
+    required this.location,
+    required this.description,
+    required this.maxPlayers,
+    this.currentPlayers = 1,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'userName': userName,
+      'sportCategory': sportCategory,
+      'title': title,
+      'date': date,
+      'time': time,
+      'location': location,
+      'description': description,
+      'maxPlayers': maxPlayers,
+      'currentPlayers': currentPlayers,
+    };
+  }
+
+  factory Activity.fromMap(Map<String, dynamic> map) {
+    return Activity(
+      id: map['id'],
+      userName: map['userName'] ?? '',
+      sportCategory: map['sportCategory'] ?? '',
+      title: map['title'] ?? '',
+      date: map['date'] ?? '',
+      time: map['time'] ?? '',
+      location: map['location'] ?? '',
+      description: map['description'] ?? '',
+      maxPlayers: map['maxPlayers'] ?? 0,
+      currentPlayers: map['currentPlayers'] ?? 1,
     );
   }
 }
