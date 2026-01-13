@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,7 +19,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Tribe - Find your sports activities">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -27,12 +28,33 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>tribe</title>
+  <title>Tribe</title>
   <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
+  <!-- Firebase SDKs - Required for Firebase Auth and Firestore on Web -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Configuration -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAO9Rk9fagU39RK7kdj-QTn_t_D_ZqA2kU",
+      authDomain: "tribe-9c238.firebaseapp.com",
+      projectId: "tribe-9c238",
+      storageBucket: "tribe-9c238.firebasestorage.app",
+      messagingSenderId: "411728040248",
+      appId: "1:411728040248:web:2510271d4ceb1858a471cd",
+      measurementId: "G-G10NJW1Z3Y"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
+
 </html>
