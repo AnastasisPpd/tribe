@@ -59,6 +59,22 @@ class FirebaseHelper {
     await _profiles.doc(user.uid).set(data, SetOptions(merge: true));
   }
 
+  // Alias for saveProfile
+  Future<void> updateProfile(Map<String, dynamic> data) => saveProfile(data);
+
+  Stream<Map<String, dynamic>?> streamUserProfile() {
+    final user = currentUser;
+    if (user == null) return Stream.value(null);
+    return _profiles.doc(user.uid).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      final data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id;
+      return data;
+    });
+  }
+
+  bool isMe(String userId) => currentUser?.uid == userId;
+
   // ==================== ACTIVITIES ====================
   Future<String> createActivity(Map<String, dynamic> data) async {
     final user = currentUser;
@@ -171,4 +187,8 @@ class FirebaseHelper {
         .orderBy('timestamp', descending: false)
         .snapshots();
   }
+
+  // Alias for streamMessages
+  Stream<QuerySnapshot> getMessages(String activityId) =>
+      streamMessages(activityId);
 }

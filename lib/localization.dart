@@ -15,19 +15,52 @@ class AppLocalization extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> toggleLanguage() async {
+    setLanguage(isGreek ? 'en' : 'el');
+  }
+
   String get(String key) => _translations[_language]?[key] ?? key;
 
   // Sports list in current language
   List<String> get sports => isGreek
-      ? ['Ποδόσφαιρο', 'Μπάσκετ', 'Τένις', 'Βόλεϊ', 'Yoga', 'Άλλο']
-      : ['Football', 'Basketball', 'Tennis', 'Volleyball', 'Yoga', 'Other'];
+      ? [
+          'Ποδόσφαιρο',
+          'Μπάσκετ',
+          'Τένις',
+          'Running',
+          'Βόλεϊ',
+          'Padel',
+          'Gym',
+          'Cycling',
+          'Swimming',
+          'Yoga',
+          'Άλλο',
+        ]
+      : [
+          'Football',
+          'Basketball',
+          'Tennis',
+          'Running',
+          'Volleyball',
+          'Padel',
+          'Gym',
+          'Cycling',
+          'Swimming',
+          'Yoga',
+          'Other',
+        ];
 
   // Sport translation maps (for database storage and filtering)
   static const Map<String, String> _sportEnToEl = {
     'Football': 'Ποδόσφαιρο',
     'Basketball': 'Μπάσκετ',
     'Tennis': 'Τένις',
+    'Running': 'Running',
     'Volleyball': 'Βόλεϊ',
+    'Padel': 'Padel',
+    'Gym': 'Gym',
+    'Cycling': 'Cycling',
+    'Swimming': 'Swimming',
     'Yoga': 'Yoga',
     'Other': 'Άλλο',
   };
@@ -35,7 +68,12 @@ class AppLocalization extends ChangeNotifier {
     'Ποδόσφαιρο': 'Football',
     'Μπάσκετ': 'Basketball',
     'Τένις': 'Tennis',
+    'Running': 'Running',
     'Βόλεϊ': 'Volleyball',
+    'Padel': 'Padel',
+    'Gym': 'Gym',
+    'Cycling': 'Cycling',
+    'Swimming': 'Swimming',
     'Yoga': 'Yoga',
     'Άλλο': 'Other',
   };
@@ -127,6 +165,8 @@ class AppLocalization extends ChangeNotifier {
       'tapToSelectLocation': 'Πάτα στον χάρτη για να επιλέξεις τοποθεσία',
       'join': 'Συμμετοχή',
       'leave': 'Αποχώρηση',
+      'noLocationSelected': 'Δεν έχεις επιλέξει τοποθεσία. Θέλεις να φύγεις;',
+      'exit': 'Έξοδος',
 
       // Search
       'searchTitle': 'Αναζήτηση',
@@ -135,17 +175,21 @@ class AppLocalization extends ChangeNotifier {
       'results': 'αποτελέσματα',
       'noResults': 'Δεν βρέθηκαν αποτελέσματα',
       'filters': 'Φίλτρα',
+      'apply': 'Εφαρμογή',
       'selectSportFilter': 'Επίλεξε το άθλημα που σε ενδιαφέρει',
+      'selectActivity': 'Επίλεξε Δραστηριότητα',
       'all': 'Όλα',
 
       // Chat
       'yourTeams': 'Οι Ομάδες σου',
       'chatSubtitle': 'Συνομιλίες με τις αθλητικές σου ομάδες',
+      'noChats': 'Δεν έχεις ακόμα ομάδες',
       'joinToChat':
           'Μπες σε μια δραστηριότητα για να ξεκινήσεις να συνομιλείς!',
       'members': 'μέλη',
       'typeMessage': 'Γράψε μήνυμα...',
       'noMessagesYet': 'Δεν υπάρχουν μηνύματα ακόμα.\nΞεκίνα τη συνομιλία!',
+      'lastMessage': 'Τελευταίο μήνυμα',
 
       // Profile
       'editProfile': 'Επεξεργασία',
@@ -246,6 +290,8 @@ class AppLocalization extends ChangeNotifier {
       'tapToSelectLocation': 'Tap on the map to select location',
       'join': 'Join',
       'leave': 'Leave',
+      'noLocationSelected': 'No location selected. Do you want to exit?',
+      'exit': 'Exit',
 
       // Search
       'searchTitle': 'Search',
@@ -254,16 +300,20 @@ class AppLocalization extends ChangeNotifier {
       'results': 'results',
       'noResults': 'No results found',
       'filters': 'Filters',
+      'apply': 'Apply',
       'selectSportFilter': 'Select the sport you\'re interested in',
+      'selectActivity': 'Select Activity',
       'all': 'All',
 
       // Chat
       'yourTeams': 'Your Teams',
       'chatSubtitle': 'Chat with your sports teams',
+      'noChats': 'You don\'t have any teams yet',
       'joinToChat': 'Join an activity to start chatting!',
       'members': 'members',
       'typeMessage': 'Type a message...',
       'noMessagesYet': 'No messages yet.\nStart the conversation!',
+      'lastMessage': 'Last message',
 
       // Profile
       'editProfile': 'Edit',
