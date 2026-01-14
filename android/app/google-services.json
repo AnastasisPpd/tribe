@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "411728040248",
+    "project_id": "tribe-9c238",
+    "storage_bucket": "tribe-9c238.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:411728040248:android:7b6c61406c4e921ba471cd",
+        "android_client_info": {
+          "package_name": "com.ntua.tribe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAY4Mimj0UpTmsRu3t_U6x0jt03ti4NTU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
