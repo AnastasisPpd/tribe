@@ -41,10 +41,25 @@ class ActivityCard extends StatelessWidget {
                       CircleAvatar(
                         backgroundColor: kBlue,
                         radius: 20,
-                        child: Text(
-                          (activity['creatorName'] ?? 'U')[0].toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        backgroundImage:
+                            (activity['creatorPhotoUrl'] != null &&
+                                (activity['creatorPhotoUrl'] as String)
+                                    .isNotEmpty)
+                            ? NetworkImage(
+                                activity['creatorPhotoUrl'] as String,
+                              )
+                            : null,
+                        child:
+                            (activity['creatorPhotoUrl'] == null ||
+                                (activity['creatorPhotoUrl'] as String).isEmpty)
+                            ? Text(
+                                (activity['creatorName'] ?? 'U')[0]
+                                    .toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(

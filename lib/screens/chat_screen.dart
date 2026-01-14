@@ -106,13 +106,24 @@ class _ChatScreenState extends State<ChatScreen> {
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: Colors.grey[800],
-                            child: Text(
-                              (data['senderName'] ?? '?')[0].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
-                            ),
+                            backgroundImage:
+                                (data['senderPhotoUrl'] != null &&
+                                    (data['senderPhotoUrl'] as String)
+                                        .isNotEmpty)
+                                ? NetworkImage(data['senderPhotoUrl'] as String)
+                                : null,
+                            child:
+                                (data['senderPhotoUrl'] == null ||
+                                    (data['senderPhotoUrl'] as String).isEmpty)
+                                ? Text(
+                                    (data['senderName'] ?? '?')[0]
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : null,
                           ),
                           const SizedBox(width: 8),
                         ],

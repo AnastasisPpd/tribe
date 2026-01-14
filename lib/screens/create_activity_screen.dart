@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/constants.dart';
 import '../../firebase_helper.dart';
 import '../../widgets/map_location_picker.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../localization.dart';
 
 class CreateActivityScreen extends StatefulWidget {
@@ -138,11 +138,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       ),
     );
 
-    if (result != null && result is LatLng) {
+    if (result != null && result is LocationResult) {
       setState(() {
-        _locationCoords = result;
-        _locationName = 'Επιλεγμένη Τοποθεσία'; // Could use geocoding here
-        _locationAddress = '${result.latitude}, ${result.longitude}';
+        _locationCoords = result.coordinates;
+        _locationName = result.address;
+        _locationAddress = result.address;
       });
     }
   }

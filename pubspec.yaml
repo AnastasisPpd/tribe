@@ -17,14 +17,20 @@ dependencies:
   intl: ^0.20.2
   
   # Πακέτα Χάρτη (τα αφήνω αφού τα είχες)
-  flutter_map: ^8.2.2
-  latlong2: ^0.9.1
   
   # Firebase (Οι εκδόσεις που είχες)
   firebase_core: ^3.8.1
   cloud_firestore: ^5.6.0
   firebase_auth: ^5.1.0
+  firebase_storage: ^12.1.0
   shared_preferences: ^2.2.0
+  
+  # Image Picker για φωτογραφίες προφίλ
+  image_picker: ^1.0.4
+  google_maps_flutter: ^2.14.0
+  geocoding: ^4.0.0
+  
+  # HTTP client for API requests
 
 dev_dependencies:
   flutter_test:
@@ -33,9 +39,11 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
-  image_path: "assets/images/app_icon.png"
+  image_path: "assets/images/user_icon.png"
+  adaptive_icon_background: "#1877F2"
+  adaptive_icon_foreground: "assets/images/user_icon.png"
 
 flutter:
   uses-material-design: true

@@ -1,8 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../utils/constants.dart';
 import '../../firebase_helper.dart';
 import '../../widgets/map_location_picker.dart';
-import 'package:latlong2/latlong.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -19,6 +20,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _address = '';
   List<String> _favoriteSports = [];
   bool _isLoading = false;
+  File? _selectedImage;
+  String? _existingPhotoUrl;
+  final ImagePicker _imagePicker = ImagePicker();
 
   final List<String> _allSports = [
     'Football',
@@ -41,7 +45,137 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _bioController.text = widget.profile['bio'] ?? '';
     _cityController.text = widget.profile['city'] ?? '';
     _address = widget.profile['address'] ?? '';
+    _existingPhotoUrl = widget.profile['photoUrl'];
     _favoriteSports = List<String>.from(widget.profile['favoriteSports'] ?? []);
+  }
+
+  Future<void> _showImagePickerDialog() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Επιλογή Φωτογραφίας',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: kBlue.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: kBlue),
+                ),
+                title: const Text(
+                  'Τράβηξε Φωτογραφία',
+                  style: TextStyle(color: Colors.white),
+                ),
+                subtitle: const Text(
+                  'Χρησιμοποίησε την κάμερα',
+                  style: TextStyle(color: Colors.white54),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: kBlue.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.photo_library, color: kBlue),
+                ),
+                title: const Text(
+                  'Διάλεξε από Gallery',
+                  style: TextStyle(color: Colors.white),
+                ),
+                subtitle: const Text(
+                  'Επέλεξε από τις φωτογραφίες σου',
+                  style: TextStyle(color: Colors.white54),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (pickedFile != null) {
+        final imageFile = File(pickedFile.path);
+        setState(() {
+          _selectedImage = imageFile;
+        });
+
+        // Upload to Firebase Storage
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ανέβασμα φωτογραφίας...'),
+              backgroundColor: kBlue,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+
+        try {
+          await FirebaseHelper.instance.uploadProfilePhoto(imageFile);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Η φωτογραφία αποθηκεύτηκε!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Σφάλμα αποθήκευσης: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Σφάλμα: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Future<void> _pickLocation() async {
@@ -53,11 +187,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
 
-    if (result != null && result is LatLng) {
+    if (result != null && result is LocationResult) {
       setState(() {
+        _cityController.text = result.address;
         _address =
-            '${result.latitude}, ${result.longitude}'; // Temporary: store coords as address since no geocoding
-        // _cityController.text = ... // You might want to let user type city manually
+            '${result.coordinates.latitude}, ${result.coordinates.longitude}';
       });
     }
   }
@@ -130,39 +264,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: kBlue,
-                    child: Text(
-                      (_nameController.text.isNotEmpty
-                              ? _nameController.text[0]
-                              : '?')
-                          .toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
+              child: GestureDetector(
+                onTap: _showImagePickerDialog,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: kBlue,
+                      backgroundImage: _selectedImage != null
+                          ? FileImage(_selectedImage!)
+                          : (_existingPhotoUrl != null &&
+                                _existingPhotoUrl!.isNotEmpty)
+                          ? NetworkImage(_existingPhotoUrl!)
+                          : null,
+                      child:
+                          (_selectedImage == null &&
+                              (_existingPhotoUrl == null ||
+                                  _existingPhotoUrl!.isEmpty))
+                          ? Text(
+                              (_nameController.text.isNotEmpty
+                                      ? _nameController.text[0]
+                                      : '?')
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: kCard,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: kCard,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 24),

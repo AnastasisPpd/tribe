@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// Singleton helper class for all Firebase operations
 class FirebaseHelper {
@@ -8,6 +10,7 @@ class FirebaseHelper {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Collections
   CollectionReference get _activities => _firestore.collection('activities');
@@ -57,10 +60,71 @@ class FirebaseHelper {
     data['email'] = user.email;
     data['updatedAt'] = FieldValue.serverTimestamp();
     await _profiles.doc(user.uid).set(data, SetOptions(merge: true));
+
+    // Sync photoUrl to activities if present in data or if we can fetch it
+    String? photoUrl = data['photoUrl'];
+    if (photoUrl == null) {
+      // If not in update data, try to get from current profile to ensure consistency
+      // This is a "heavy" check but ensures consistency as requested
+      final currentProfile = await getProfile(userId: user.uid);
+      photoUrl = currentProfile?['photoUrl'];
+    }
+
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      await _updateCreatorPhotoInActivities(user.uid, photoUrl);
+    }
   }
 
   // Alias for saveProfile
   Future<void> updateProfile(Map<String, dynamic> data) => saveProfile(data);
+
+  /// Upload profile photo to Firebase Storage and save URL to profile
+  Future<String?> uploadProfilePhoto(File imageFile) async {
+    final user = currentUser;
+    if (user == null) throw Exception('Must be logged in');
+
+    try {
+      // Create a unique filename
+      final fileName = 'profile_${user.uid}.jpg';
+      final ref = _storage.ref().child('profile_photos').child(fileName);
+
+      // Upload file
+      await ref.putFile(imageFile);
+
+      // Get download URL
+      final downloadUrl = await ref.getDownloadURL();
+
+      // Update profile with photo URL
+      await updateProfile({'photoUrl': downloadUrl});
+
+      // Also update all activities created by this user
+      await _updateCreatorPhotoInActivities(user.uid, downloadUrl);
+
+      return downloadUrl;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Update creatorPhotoUrl in all activities created by a user
+  Future<void> _updateCreatorPhotoInActivities(
+    String userId,
+    String photoUrl,
+  ) async {
+    try {
+      final snapshot = await _activities
+          .where('creatorId', isEqualTo: userId)
+          .get();
+
+      final batch = _firestore.batch();
+      for (final doc in snapshot.docs) {
+        batch.update(doc.reference, {'creatorPhotoUrl': photoUrl});
+      }
+      await batch.commit();
+    } catch (e) {
+      // Silently fail - not critical if activities don't update immediately
+    }
+  }
 
   Stream<Map<String, dynamic>?> streamUserProfile() {
     final user = currentUser;
@@ -80,12 +144,16 @@ class FirebaseHelper {
     final user = currentUser;
     if (user == null) throw Exception('Must be logged in');
 
-    // Get creator name from profile
+    // Get creator info from profile
     final profile = await getProfile();
     final creatorName = profile?['name'] ?? user.email ?? 'Anonymous';
+    final creatorPhotoUrl = profile?['photoUrl'] as String?;
 
     data['creatorId'] = user.uid;
     data['creatorName'] = creatorName;
+    if (creatorPhotoUrl != null && creatorPhotoUrl.isNotEmpty) {
+      data['creatorPhotoUrl'] = creatorPhotoUrl;
+    }
     data['participants'] = [user.uid]; // Creator auto-joins
     data['createdAt'] = FieldValue.serverTimestamp();
 
@@ -171,10 +239,12 @@ class FirebaseHelper {
 
     final profile = await getProfile();
     final senderName = profile?['name'] ?? user.email ?? 'Anonymous';
+    final senderPhotoUrl = profile?['photoUrl'];
 
     await _chats.doc(activityId).collection('messages').add({
       'senderId': user.uid,
       'senderName': senderName,
+      'senderPhotoUrl': senderPhotoUrl,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
     });

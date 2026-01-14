@@ -79,7 +79,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pop(context);
       }
     } on Exception catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted)
+        setState(() => _error = e.toString().replaceAll('Exception: ', ''));
     } catch (e) {
       if (mounted) setState(() => _error = 'Αποτυχία εγγραφής');
     } finally {
@@ -212,6 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: _isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: kBlue,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -219,7 +221,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                            'Εγγραφή',
+                            'Δημιουργία',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

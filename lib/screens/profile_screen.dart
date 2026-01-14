@@ -73,7 +73,8 @@ class _ProfileScreenState extends State<ProfileScreen>
               final user = snapshot.data;
               final name = user?['name'] ?? 'User';
               final bio = user?['bio'] ?? '';
-              final location = user?['location'] ?? '';
+              final location = user?['city'] ?? user?['location'] ?? '';
+              final photoUrl = user?['photoUrl'] as String?;
               final sports = List<String>.from(user?['favoriteSports'] ?? []);
 
               return Container(
@@ -129,14 +130,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                         ],
                       ),
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 40,
                         backgroundColor: kBlue,
-                        child: Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.white,
-                        ),
+                        backgroundImage:
+                            (photoUrl != null && photoUrl.isNotEmpty)
+                            ? NetworkImage(photoUrl)
+                            : null,
+                        child: (photoUrl == null || photoUrl.isEmpty)
+                            ? const Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.white,
+                              )
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       Text(
