@@ -44,7 +44,7 @@ class DatabaseHelper {
       currentPlayers INTEGER
     )
   ''');
-    
+
     // Πίνακας για το Profile (για persistence του ονόματος/bio)
     await db.execute('''
     CREATE TABLE profile (
@@ -66,7 +66,7 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.query('activities', orderBy: 'id DESC');
   }
- // --- ΜΕΘΟΔΟΙ ΓΙΑ ΤΟ PROFILE ---
+  // --- ΜΕΘΟΔΟΙ ΓΙΑ ΤΟ PROFILE ---
 
   // Παίρνει τα δεδομένα του προφίλ από τη βάση
   Future<Map<String, dynamic>?> getProfile() async {
@@ -86,10 +86,17 @@ class DatabaseHelper {
       await db.insert(
         'profile',
         profile,
-        conflictAlgorithm: ConflictAlgorithm.replace, // Αν υπάρχει ήδη το id 1, κάνει αντικατάσταση
+        conflictAlgorithm: ConflictAlgorithm
+            .replace, // Αν υπάρχει ήδη το id 1, κάνει αντικατάσταση
       );
     } catch (e, st) {
-      developer.log('DB saveProfile error', name: 'DatabaseHelper', level: 1000, error: e, stackTrace: st);
+      developer.log(
+        'DB saveProfile error',
+        name: 'DatabaseHelper',
+        level: 1000,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -98,11 +105,21 @@ class DatabaseHelper {
   Future<Map<String, dynamic>?> getActivity(int id) async {
     final db = await instance.database;
     try {
-      final maps = await db.query('activities', where: 'id = ?', whereArgs: [id]);
+      final maps = await db.query(
+        'activities',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
       if (maps.isNotEmpty) return maps.first;
       return null;
     } catch (e, st) {
-      developer.log('DB getActivity error', name: 'DatabaseHelper', level: 1000, error: e, stackTrace: st);
+      developer.log(
+        'DB getActivity error',
+        name: 'DatabaseHelper',
+        level: 1000,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -111,9 +128,20 @@ class DatabaseHelper {
   Future<int> updateActivity(int id, Map<String, dynamic> row) async {
     final db = await instance.database;
     try {
-      return await db.update('activities', row, where: 'id = ?', whereArgs: [id]);
+      return await db.update(
+        'activities',
+        row,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
     } catch (e, st) {
-      developer.log('DB updateActivity error', name: 'DatabaseHelper', level: 1000, error: e, stackTrace: st);
+      developer.log(
+        'DB updateActivity error',
+        name: 'DatabaseHelper',
+        level: 1000,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -124,7 +152,13 @@ class DatabaseHelper {
     try {
       return await db.delete('activities', where: 'id = ?', whereArgs: [id]);
     } catch (e, st) {
-      developer.log('DB deleteActivity error', name: 'DatabaseHelper', level: 1000, error: e, stackTrace: st);
+      developer.log(
+        'DB deleteActivity error',
+        name: 'DatabaseHelper',
+        level: 1000,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -138,7 +172,13 @@ class DatabaseHelper {
         _database = null;
       }
     } catch (e, st) {
-      developer.log('DB close error', name: 'DatabaseHelper', level: 1000, error: e, stackTrace: st);
+      developer.log(
+        'DB close error',
+        name: 'DatabaseHelper',
+        level: 1000,
+        error: e,
+        stackTrace: st,
+      );
       rethrow;
     }
   }
@@ -151,5 +191,4 @@ class DatabaseHelper {
     //   await db.execute('ALTER TABLE activities ADD COLUMN price TEXT;');
     // }
   }
-
 }
