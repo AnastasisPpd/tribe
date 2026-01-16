@@ -85,7 +85,7 @@ class ActivityCard extends StatelessWidget {
                               const SizedBox(width: 12),
                               Flexible(
                                 child: Text(
-                                  activity['creatorName'] ?? 'Χρήστης',
+                                  activity['creatorName'] ?? tr('user'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -131,7 +131,7 @@ class ActivityCard extends StatelessWidget {
                               color: Colors.white70,
                               size: 22,
                             ),
-                            tooltip: 'Συμμετέχοντες',
+                            tooltip: tr('participants'),
                             padding: const EdgeInsets.all(8),
                             constraints: const BoxConstraints(),
                             onPressed: () =>
@@ -158,33 +158,33 @@ class ActivityCard extends StatelessWidget {
                                 }
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'edit',
                                   child: Row(
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.edit,
                                         color: Colors.white70,
                                         size: 20,
                                       ),
-                                      SizedBox(width: 12),
-                                      Text('Επεξεργασία'),
+                                      const SizedBox(width: 12),
+                                      Text(tr('edit')),
                                     ],
                                   ),
                                 ),
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'delete',
                                   child: Row(
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.delete,
                                         color: Colors.redAccent,
                                         size: 20,
                                       ),
-                                      SizedBox(width: 12),
+                                      const SizedBox(width: 12),
                                       Text(
-                                        'Διαγραφή',
-                                        style: TextStyle(
+                                        tr('delete'),
+                                        style: const TextStyle(
                                           color: Colors.redAccent,
                                         ),
                                       ),
@@ -201,7 +201,7 @@ class ActivityCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   // Title & Description
                   Text(
-                    activity['title'] ?? 'Χωρίς τίτλο',
+                    activity['title'] ?? tr('noTitle'),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -270,13 +270,16 @@ class ActivityCard extends StatelessWidget {
                       Builder(
                         builder: (context) {
                           // Robust price parsing: handles int, double, String, null
-                          final rawPrice = activity['price'];
+                          // Field is stored as 'cost' in the database
+                          final rawPrice = activity['cost'];
                           num priceValue = 0;
                           if (rawPrice is num) {
                             priceValue = rawPrice;
                           } else if (rawPrice is String &&
                               rawPrice.isNotEmpty) {
-                            priceValue = num.tryParse(rawPrice) ?? 0;
+                            // Strip € symbol and whitespace before parsing
+                            final cleaned = rawPrice.replaceAll('€', '').trim();
+                            priceValue = num.tryParse(cleaned) ?? 0;
                           }
                           final isFree = priceValue <= 0;
 
@@ -289,7 +292,7 @@ class ActivityCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                isFree ? 'Δωρεάν' : '$priceValue€',
+                                isFree ? tr('free') : '$priceValue€',
                                 style: TextStyle(
                                   color: isFree ? Colors.green : Colors.white70,
                                   fontSize: 13,
@@ -312,9 +315,9 @@ class ActivityCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Παίκτες',
-                            style: TextStyle(color: Colors.white54),
+                          Text(
+                            tr('players'),
+                            style: const TextStyle(color: Colors.white54),
                           ),
                           Text(
                             '${participants.length}/$maxPlayers',
@@ -362,10 +365,10 @@ class ActivityCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(25),
           border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            'Ολοκληρωμένο',
-            style: TextStyle(
+            tr('completedStatus'),
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.red,
               fontSize: 14,
@@ -385,9 +388,12 @@ class ActivityCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const Text(
-          'Αποχώρηση',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        child: Text(
+          tr('leave'),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       );
     }
@@ -398,9 +404,12 @@ class ActivityCard extends StatelessWidget {
         backgroundColor: kBlue,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       ),
-      child: const Text(
-        'Συμμετοχή',
-        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+      child: Text(
+        tr('join'),
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -432,8 +441,8 @@ class ActivityCard extends StatelessWidget {
       await FirebaseHelper.instance.joinActivity(activity['id']);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Έγινες μέλος!'),
+          SnackBar(
+            content: Text(tr('joinedSuccess')),
             backgroundColor: Colors.green,
           ),
         );
@@ -441,7 +450,10 @@ class ActivityCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Σφάλμα: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${tr('error')}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -451,14 +463,17 @@ class ActivityCard extends StatelessWidget {
     try {
       await FirebaseHelper.instance.leaveActivity(activity['id']);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Αποχώρησες από το activity')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(tr('leftActivity'))));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Σφάλμα: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${tr('error')}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -469,15 +484,15 @@ class ActivityCard extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: const Text('Διαγραφή Activity;'),
-        content: const Text(
-          'Είσαι σίγουρος πως θες να το διαγράψεις;',
-          style: TextStyle(color: Colors.white70),
+        title: Text(tr('deleteActivity')),
+        content: Text(
+          tr('deleteConfirmMessage'),
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Άκυρο'),
+            child: Text(tr('cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -488,14 +503,17 @@ class ActivityCard extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Σφάλμα: $e'),
+                      content: Text('${tr('error')}: $e'),
                       backgroundColor: Colors.red,
                     ),
                   );
                 }
               }
             },
-            child: const Text('Διαγραφή', style: TextStyle(color: Colors.red)),
+            child: Text(
+              tr('delete'),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),

@@ -34,11 +34,11 @@ class ChatsScreen extends StatelessWidget {
             ],
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: Text(
-            'Οι Ομάδες μου',
-            style: TextStyle(
+            tr('myTeams'),
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: kBlue,
@@ -46,11 +46,11 @@ class ChatsScreen extends StatelessWidget {
             ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           child: Text(
-            'Συνομιλίες με τις αθλητικές σου ομάδες',
-            style: TextStyle(color: Colors.white54, fontSize: 14),
+            tr('chatSubtitle'),
+            style: const TextStyle(color: Colors.white54, fontSize: 14),
           ),
         ),
         Expanded(child: _ChatsBody()),
@@ -168,11 +168,11 @@ class _ChatsBody extends StatelessWidget {
 
                 // Completed Activities Section (within 24h retention)
                 if (myCompletedActivities.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.only(top: 24, bottom: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24, bottom: 12),
                     child: Text(
-                      'Ολοκληρωμένες',
-                      style: TextStyle(
+                      tr('completed'),
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white54,

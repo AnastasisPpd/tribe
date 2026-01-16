@@ -214,9 +214,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                       // Favorite Sports Section
                       if (sports.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        const Text(
-                          'Αγαπημένα Αθλήματα',
-                          style: TextStyle(
+                        Text(
+                          tr('favoriteSports'),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: Colors.white54,
@@ -289,9 +289,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white54,
                 dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Επερχόμενες'),
-                  Tab(text: 'Ολοκληρωμένες'),
+                tabs: [
+                  Tab(text: tr('upcomingTab')),
+                  Tab(text: tr('completedTab')),
                 ],
               ),
             ),
@@ -316,15 +316,9 @@ class _ProfileScreenState extends State<ProfileScreen>
             controller: _tabController,
             children: [
               // Upcoming Tab
-              _buildActivityList(
-                upcoming,
-                'Δεν έχεις επερχόμενες δραστηριότητες',
-              ),
+              _buildActivityList(upcoming, tr('noUpcoming')),
               // Completed Tab
-              _buildActivityList(
-                completed,
-                'Δεν έχεις ολοκληρωμένες δραστηριότητες',
-              ),
+              _buildActivityList(completed, tr('noCompleted')),
             ],
           );
         },

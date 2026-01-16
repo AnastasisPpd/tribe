@@ -45,13 +45,13 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         // Title (Blue, no subtitle)
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Αναζήτηση',
-              style: TextStyle(
+              tr('searchTitle'),
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: kBlue,
@@ -73,7 +73,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: 'Αναζήτηση...',
+                        hintText: tr('searchHint'),
                         prefixIcon: const Icon(
                           Icons.search,
                           color: Colors.white54,
@@ -159,10 +159,10 @@ class _SearchScreenState extends State<SearchScreen> {
               }).toList();
 
               if (filtered.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'Δεν βρέθηκαν αποτελέσματα',
-                    style: TextStyle(color: Colors.white38),
+                    tr('noResults'),
+                    style: const TextStyle(color: Colors.white38),
                   ),
                 );
               }
@@ -206,9 +206,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Φίλτρα',
-                        style: TextStyle(
+                      Text(
+                        tr('filters'),
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
@@ -218,25 +218,25 @@ class _SearchScreenState extends State<SearchScreen> {
                           setState(() => _selectedSport = null);
                           Navigator.pop(context);
                         },
-                        child: const Text(
-                          'Καθαρισμός',
-                          style: TextStyle(color: kBlue),
+                        child: Text(
+                          tr('clear'),
+                          style: const TextStyle(color: kBlue),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Επίλεξε το άθλημα που σε ενδιαφέρει',
-                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                  Text(
+                    tr('selectSportFilter'),
+                    style: const TextStyle(color: Colors.white54, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
                   // Scrollable list of sports with checkmarks
                   Expanded(
                     child: ListView(
                       controller: scrollController,
-                      children: ['Όλα', ..._allSports].map((sport) {
-                        final isAll = sport == 'Όλα';
+                      children: [tr('all'), ..._allSports].map((sport) {
+                        final isAll = sport == tr('all');
                         final isSelected = isAll
                             ? _selectedSport == null
                             : _selectedSport == sport;
@@ -264,7 +264,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 // Left: Label
                                 Text(
                                   isAll
-                                      ? 'Όλα'
+                                      ? tr('all')
                                       : AppLocalization.instance.sportToDisplay(
                                           sport,
                                         ),

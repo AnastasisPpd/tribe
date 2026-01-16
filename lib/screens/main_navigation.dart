@@ -21,6 +21,8 @@ class MainNavigationState extends State<MainNavigation> {
   @override
   void initState() {
     super.initState();
+    // Listen to language changes
+    AppLocalization.instance.addListener(_onLanguageChange);
     // Auto-cleanup expired activities (completed > 24 hours ago)
     FirebaseHelper.instance.cleanupExpiredActivities().then((count) {
       if (count > 0) {
@@ -29,11 +31,26 @@ class MainNavigationState extends State<MainNavigation> {
     });
   }
 
-  final List<Widget> _screens = const [
-    DiscoverScreen(),
-    ChatsScreen(),
-    SearchScreen(),
-    ProfileScreen(),
+  @override
+  void dispose() {
+    AppLocalization.instance.removeListener(_onLanguageChange);
+    super.dispose();
+  }
+
+  void _onLanguageChange() {
+    setState(() {});
+  }
+
+  // Use language-based keys to force complete rebuild when language changes
+  List<Widget> get _screens => [
+    DiscoverScreen(
+      key: ValueKey('discover_${AppLocalization.instance.language}'),
+    ),
+    ChatsScreen(key: ValueKey('chats_${AppLocalization.instance.language}')),
+    SearchScreen(key: ValueKey('search_${AppLocalization.instance.language}')),
+    ProfileScreen(
+      key: ValueKey('profile_${AppLocalization.instance.language}'),
+    ),
   ];
 
   void goToDiscover() {

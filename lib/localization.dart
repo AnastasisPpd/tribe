@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ==================== LOCALIZATION ====================
 class AppLocalization extends ChangeNotifier {
@@ -6,17 +7,44 @@ class AppLocalization extends ChangeNotifier {
   static AppLocalization get instance => _instance;
   AppLocalization._();
 
+  static const String _prefsKey = 'app_language';
   String _language = 'el'; // 'el' for Greek, 'en' for English
   String get language => _language;
   bool get isGreek => _language == 'el';
 
-  void setLanguage(String lang) {
-    _language = lang;
-    notifyListeners();
+  /// Load saved language preference (call once at app start)
+  Future<void> loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_prefsKey);
+    if (saved != null && (saved == 'el' || saved == 'en')) {
+      _language = saved;
+      notifyListeners();
+    }
   }
 
-  Future<void> toggleLanguage() async {
+  /// Set language - updates UI immediately, saves to storage in background
+  void setLanguage(String lang) {
+    if (_language == lang) return;
+    _language = lang;
+    notifyListeners(); // UI updates IMMEDIATELY
+
+    // Fire-and-forget: save to storage in background
+    _saveToStorage(lang);
+  }
+
+  /// Toggle language - instant UI update
+  void toggleLanguage() {
     setLanguage(isGreek ? 'en' : 'el');
+  }
+
+  /// Background storage save (fire-and-forget)
+  Future<void> _saveToStorage(String lang) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKey, lang);
+    } catch (e) {
+      debugPrint('Failed to save language preference: $e');
+    }
   }
 
   String get(String key) => _translations[_language]?[key] ?? key;
@@ -172,7 +200,7 @@ class AppLocalization extends ChangeNotifier {
       // Search
       'searchTitle': 'Αναζήτηση',
       'searchSubtitle': 'Βρες τη δραστηριότητα που σου ταιριάζει',
-      'searchHint': 'Αναζήτηση για άθλημα, τοποθεσία...',
+      'searchHint': 'Αναζήτηση...',
       'results': 'αποτελέσματα',
       'noResults': 'Δεν βρέθηκαν αποτελέσματα',
       'filters': 'Φίλτρα',
@@ -225,6 +253,46 @@ class AppLocalization extends ChangeNotifier {
       'logout': 'Αποσύνδεση',
       'privacyMessage':
           'Τα δεδομένα σου προστατεύονται σύμφωνα με τον GDPR. Δεν μοιραζόμαστε τις πληροφορίες σου με τρίτους χωρίς τη συγκατάθεσή σου.',
+
+      // Additional UI strings
+      'discoverTitle': 'Ανακάλυψε',
+      'myTeams': 'Οι Ομάδες μου',
+      'error': 'Σφάλμα',
+      'completed': 'Ολοκληρωμένες',
+      'account': 'Λογαριασμός',
+      'profileTitle': 'Προφίλ',
+      'editProfileDesc': 'Επεξεργασία προφίλ',
+      'security': 'Ασφάλεια',
+      'changePassword': 'Αλλαγή κωδικού',
+      'darkTheme': 'Σκούρο θέμα',
+      'alwaysEnabled': 'Πάντα ενεργοποιημένο',
+      'loading': 'Φόρτωση...',
+      'about': 'Σχετικά',
+      'close': 'Κλείσιμο',
+      'clear': 'Καθαρισμός',
+      'upcomingTab': 'Επερχόμενες',
+      'completedTab': 'Ολοκληρωμένες',
+      'noUpcoming': 'Δεν έχεις επερχόμενες δραστηριότητες',
+      'noCompleted': 'Δεν έχεις ολοκληρωμένες δραστηριότητες',
+      'user': 'Χρήστης',
+      'participants': 'Συμμετέχοντες',
+      'edit': 'Επεξεργασία',
+      'noTitle': 'Χωρίς τίτλο',
+      'free': 'Δωρεάν',
+      'players': 'Παίκτες',
+      'completedStatus': 'Ολοκληρωμένο',
+      'deleteActivity': 'Διαγραφή Activity;',
+      'deleteConfirmMessage': 'Είσαι σίγουρος πως θες να το διαγράψεις;',
+      'joinedSuccess': 'Έγινες μέλος!',
+      'leftActivity': 'Αποχώρησες από το activity',
+      'notificationsNotAllowed': 'Οι ειδοποιήσεις δεν επιτράπηκαν',
+      'activities': 'Δραστηριότητες',
+      'sports': 'Αθλήματα',
+      'version': 'Έκδοση',
+      'allRightsReserved': 'Όλα τα δικαιώματα κατοχυρωμένα.',
+      'appDescription':
+          'Η εφαρμογή που σε βοηθά να βρεις ομάδα για τα αγαπημένα σου αθλήματα.',
+      'pushNotifications': 'Push notifications',
     },
     'en': {
       // Login/Register
@@ -298,7 +366,7 @@ class AppLocalization extends ChangeNotifier {
       // Search
       'searchTitle': 'Search',
       'searchSubtitle': 'Find the activity that suits you',
-      'searchHint': 'Search for sport, location...',
+      'searchHint': 'Search...',
       'results': 'results',
       'noResults': 'No results found',
       'filters': 'Filters',
@@ -350,6 +418,46 @@ class AppLocalization extends ChangeNotifier {
       'logout': 'Logout',
       'privacyMessage':
           'Your data is protected according to GDPR. We do not share your information with third parties without your consent.',
+
+      // Additional UI strings
+      'discoverTitle': 'Discover',
+      'myTeams': 'My Teams',
+      'error': 'Error',
+      'completed': 'Completed',
+      'account': 'Account',
+      'profileTitle': 'Profile',
+      'editProfileDesc': 'Edit profile',
+      'security': 'Security',
+      'changePassword': 'Change password',
+      'darkTheme': 'Dark theme',
+      'alwaysEnabled': 'Always enabled',
+      'loading': 'Loading...',
+      'about': 'About',
+      'close': 'Close',
+      'clear': 'Clear',
+      'upcomingTab': 'Upcoming',
+      'completedTab': 'Completed',
+      'noUpcoming': 'You have no upcoming activities',
+      'noCompleted': 'You have no completed activities',
+      'user': 'User',
+      'participants': 'Participants',
+      'edit': 'Edit',
+      'noTitle': 'No title',
+      'free': 'Free',
+      'players': 'Players',
+      'completedStatus': 'Completed',
+      'deleteActivity': 'Delete Activity?',
+      'deleteConfirmMessage': 'Are you sure you want to delete this?',
+      'joinedSuccess': 'You joined!',
+      'leftActivity': 'You left the activity',
+      'notificationsNotAllowed': 'Notifications not allowed',
+      'activities': 'Activities',
+      'sports': 'Sports',
+      'version': 'Version',
+      'allRightsReserved': 'All rights reserved.',
+      'appDescription':
+          'The app that helps you find a team for your favorite sports.',
+      'pushNotifications': 'Push notifications',
     },
   };
 }

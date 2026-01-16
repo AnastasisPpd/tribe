@@ -34,11 +34,11 @@ class DiscoverScreen extends StatelessWidget {
             ],
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 16),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           child: Text(
-            'Ανακάλυψε',
-            style: TextStyle(
+            tr('discoverTitle'),
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: kBlue,
@@ -58,7 +58,7 @@ class DiscoverScreen extends StatelessWidget {
               if (snapshot.hasError) {
                 return Center(
                   child: Text(
-                    'Σφάλμα: ${snapshot.error}',
+                    '${tr('error')}: ${snapshot.error}',
                     style: const TextStyle(color: Colors.red),
                   ),
                 );

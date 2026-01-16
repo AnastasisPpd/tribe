@@ -21,6 +21,9 @@ Future<void> main() async {
   // Initialize Notification Service
   await NotificationService.instance.init();
 
+  // Load saved language preference
+  await AppLocalization.instance.loadSavedLanguage();
+
   // Set up notification tap handler
   NotificationService.instance.onNotificationTap = (activityId, activityTitle) {
     navigatorKey.currentState?.push(

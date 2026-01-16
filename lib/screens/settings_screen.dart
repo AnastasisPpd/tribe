@@ -70,9 +70,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Ρυθμίσεις',
-          style: TextStyle(
+        title: Text(
+          tr('settings'),
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -86,14 +86,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Account Section
-            _sectionTitle('Λογαριασμός'),
+            _sectionTitle(tr('account')),
             const SizedBox(height: 12),
             _settingsCard([
               _settingsTile(
                 icon: Icons.person_outline,
                 iconColor: kBlue,
-                title: 'Προφίλ',
-                subtitle: 'Επεξεργασία προφίλ',
+                title: tr('profileTitle'),
+                subtitle: tr('editProfileDesc'),
                 onTap: () async {
                   // Fetch current profile and navigate to edit
                   final profile = await FirebaseHelper.instance.getProfile();
@@ -111,24 +111,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _settingsTile(
                 icon: Icons.lock_outline,
                 iconColor: Colors.orange,
-                title: 'Ασφάλεια',
-                subtitle: 'Αλλαγή κωδικού',
+                title: tr('security'),
+                subtitle: tr('changePassword'),
                 onTap: () {},
               ),
             ]),
             const SizedBox(height: 24),
 
             // Preferences Section
-            _sectionTitle('Προτιμήσεις'),
+            _sectionTitle(tr('preferences')),
             const SizedBox(height: 12),
             _settingsCard([
               _settingsToggle(
                 icon: Icons.notifications_outlined,
                 iconColor: Colors.purple,
-                title: 'Ειδοποιήσεις',
+                title: tr('notifications'),
                 subtitle: _isLoadingNotifications
-                    ? 'Φόρτωση...'
-                    : 'Push notifications',
+                    ? tr('loading')
+                    : tr('pushNotifications'),
                 value: _notifications,
                 onChanged: _isLoadingNotifications
                     ? null
@@ -138,8 +138,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _settingsToggle(
                 icon: Icons.dark_mode_outlined,
                 iconColor: Colors.indigo,
-                title: 'Σκούρο θέμα',
-                subtitle: 'Πάντα ενεργοποιημένο',
+                title: tr('darkTheme'),
+                subtitle: tr('alwaysEnabled'),
                 value: _darkMode,
                 onChanged: (v) => setState(() => _darkMode = v),
               ),
@@ -147,7 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _settingsTile(
                 icon: Icons.language,
                 iconColor: Colors.teal,
-                title: 'Γλώσσα',
+                title: tr('language'),
                 subtitle: AppLocalization.instance.isGreek
                     ? 'Ελληνικά'
                     : 'English',
@@ -169,8 +169,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
-                onTap: () async {
-                  await AppLocalization.instance.toggleLanguage();
+                onTap: () {
+                  AppLocalization.instance.toggleLanguage();
                   setState(() {});
                 },
               ),
@@ -178,22 +178,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // Support Section
-            _sectionTitle('Υποστήριξη'),
+            _sectionTitle(tr('support')),
             const SizedBox(height: 12),
             _settingsCard([
               _settingsTile(
                 icon: Icons.help_outline,
                 iconColor: Colors.green,
-                title: 'Βοήθεια & FAQ',
-                subtitle: 'Συχνές ερωτήσεις',
+                title: tr('helpFaq'),
+                subtitle: tr('helpFaqDesc'),
                 onTap: () => _showHelpDialog(),
               ),
               _divider(),
               _settingsTile(
                 icon: Icons.info_outline,
                 iconColor: Colors.blueGrey,
-                title: 'Σχετικά',
-                subtitle: 'Tribe v1.0.0',
+                title: tr('about'),
+                subtitle: '${tr('version')} 1.0.0',
                 onTap: () => _showAboutDialog(),
               ),
             ]),
@@ -222,9 +222,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   elevation: 0,
                 ),
                 icon: const Icon(Icons.logout, size: 20),
-                label: const Text(
-                  'Αποσύνδεση',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                label: Text(
+                  tr('logout'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
