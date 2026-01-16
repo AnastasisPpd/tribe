@@ -6,6 +6,7 @@ import 'chats_screen.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
 import 'create_activity_screen.dart';
+import '../../firebase_helper.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -16,6 +17,17 @@ class MainNavigation extends StatefulWidget {
 
 class MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-cleanup expired activities (completed > 24 hours ago)
+    FirebaseHelper.instance.cleanupExpiredActivities().then((count) {
+      if (count > 0) {
+        debugPrint('Cleaned up $count expired activities');
+      }
+    });
+  }
 
   final List<Widget> _screens = const [
     DiscoverScreen(),

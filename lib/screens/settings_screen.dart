@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 import '../../localization.dart';
 import '../../firebase_helper.dart';
+import '../../services/notification_service.dart';
 import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -12,8 +13,51 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notifications = true;
+  bool _notifications = false;
   bool _darkMode = true;
+  bool _isLoadingNotifications = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load notification preference from service
+    _notifications = NotificationService.instance.isEnabled;
+  }
+
+  Future<void> _toggleNotifications(bool enabled) async {
+    setState(() => _isLoadingNotifications = true);
+    try {
+      if (enabled) {
+        // Request permission when enabling
+        final granted = await NotificationService.instance.requestPermission();
+        if (!granted) {
+          // Permission denied, show message and keep toggle off
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Οι ειδοποιήσεις δεν επιτράπηκαν'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          setState(() => _isLoadingNotifications = false);
+          return;
+        }
+      }
+      await NotificationService.instance.setEnabled(enabled);
+      setState(() {
+        _notifications = enabled;
+        _isLoadingNotifications = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingNotifications = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Σφάλμα: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,9 +126,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.notifications_outlined,
                 iconColor: Colors.purple,
                 title: 'Ειδοποιήσεις',
-                subtitle: 'Push notifications',
+                subtitle: _isLoadingNotifications
+                    ? 'Φόρτωση...'
+                    : 'Push notifications',
                 value: _notifications,
-                onChanged: (v) => setState(() => _notifications = v),
+                onChanged: _isLoadingNotifications
+                    ? null
+                    : (v) => _toggleNotifications(v),
               ),
               _divider(),
               _settingsToggle(
@@ -286,7 +334,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    ValueChanged<bool>? onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -423,7 +471,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SizedBox(height: 16),
             Text(
-              '© 2024 Tribe',
+              '© 2026 Tribe',
               style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
             Text(

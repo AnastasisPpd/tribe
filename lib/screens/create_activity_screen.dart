@@ -389,8 +389,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             Slider(
               value: _maxPlayers.toDouble(),
               min: 2,
-              max: 50,
-              divisions: 48,
+              max: 22,
+              divisions: 20,
               activeColor: kBlue,
               label: _maxPlayers.toString(),
               onChanged: (val) => setState(() => _maxPlayers = val.toInt()),

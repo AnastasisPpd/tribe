@@ -4,6 +4,8 @@ import '../firebase_helper.dart';
 import '../localization.dart';
 import '../screens/chat_screen.dart';
 import '../screens/create_activity_screen.dart';
+import '../screens/public_user_profile.dart';
+import 'participants_bottom_sheet.dart';
 
 class ActivityCard extends StatelessWidget {
   final Map<String, dynamic> activity;
@@ -38,43 +40,63 @@ class ActivityCard extends StatelessWidget {
                   // Header: Avatar, Name, Sport Badge, and Actions (popup menu for creator)
                   Row(
                     children: [
-                      CircleAvatar(
-                        backgroundColor: kBlue,
-                        radius: 20,
-                        backgroundImage:
-                            (activity['creatorPhotoUrl'] != null &&
-                                (activity['creatorPhotoUrl'] as String)
-                                    .isNotEmpty)
-                            ? NetworkImage(
-                                activity['creatorPhotoUrl'] as String,
-                              )
-                            : null,
-                        child:
-                            (activity['creatorPhotoUrl'] == null ||
-                                (activity['creatorPhotoUrl'] as String).isEmpty)
-                            ? Text(
-                                (activity['creatorName'] ?? 'U')[0]
-                                    .toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
+                      // Creator Avatar + Name - tappable to view profile
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              activity['creatorName'] ?? 'Χρήστης',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                        child: GestureDetector(
+                          onTap: () {
+                            final creatorId = activity['creatorId'] as String?;
+                            if (creatorId != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      PublicUserProfile(userId: creatorId),
+                                ),
+                              );
+                            }
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: kBlue,
+                                radius: 20,
+                                backgroundImage:
+                                    (activity['creatorPhotoUrl'] != null &&
+                                        (activity['creatorPhotoUrl'] as String)
+                                            .isNotEmpty)
+                                    ? NetworkImage(
+                                        activity['creatorPhotoUrl'] as String,
+                                      )
+                                    : null,
+                                child:
+                                    (activity['creatorPhotoUrl'] == null ||
+                                        (activity['creatorPhotoUrl'] as String)
+                                            .isEmpty)
+                                    ? Text(
+                                        (activity['creatorName'] ?? 'U')[0]
+                                            .toUpperCase(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  activity['creatorName'] ?? 'Χρήστης',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       // Sport Badge - Always visible
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -97,58 +119,83 @@ class ActivityCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Creator actions (popup menu)
-                      if (isCreator)
-                        PopupMenuButton<String>(
-                          icon: const Icon(
-                            Icons.more_vert,
-                            color: Colors.white70,
-                          ),
-                          color: kCard,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          onSelected: (value) {
-                            if (value == 'edit') {
-                              _editActivity(context);
-                            } else if (value == 'delete') {
-                              _confirmDelete(context);
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.edit,
-                                    color: Colors.white70,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text('Επεξεργασία'),
-                                ],
-                              ),
+                      const SizedBox(width: 4),
+                      // Action icons grouped together
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // View Participants button
+                          IconButton(
+                            icon: const Icon(
+                              Icons.group,
+                              color: Colors.white70,
+                              size: 22,
                             ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete,
-                                    color: Colors.redAccent,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Διαγραφή',
-                                    style: TextStyle(color: Colors.redAccent),
-                                  ),
-                                ],
+                            tooltip: 'Συμμετέχοντες',
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(),
+                            onPressed: () =>
+                                showParticipantsBottomSheet(context, activity),
+                          ),
+                          // Creator actions (popup menu)
+                          if (isCreator) ...[
+                            const SizedBox(width: 4),
+                            PopupMenuButton<String>(
+                              icon: const Icon(
+                                Icons.more_vert,
+                                color: Colors.white70,
                               ),
+                              padding: const EdgeInsets.all(8),
+                              color: kCard,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _editActivity(context);
+                                } else if (value == 'delete') {
+                                  _confirmDelete(context);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.edit,
+                                        color: Colors.white70,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text('Επεξεργασία'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete,
+                                        color: Colors.redAccent,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Διαγραφή',
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -218,6 +265,43 @@ class ActivityCard extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 6),
+                      // Price row
+                      Builder(
+                        builder: (context) {
+                          // Robust price parsing: handles int, double, String, null
+                          final rawPrice = activity['price'];
+                          num priceValue = 0;
+                          if (rawPrice is num) {
+                            priceValue = rawPrice;
+                          } else if (rawPrice is String &&
+                              rawPrice.isNotEmpty) {
+                            priceValue = num.tryParse(rawPrice) ?? 0;
+                          }
+                          final isFree = priceValue <= 0;
+
+                          return Row(
+                            children: [
+                              Icon(
+                                Icons.euro,
+                                size: 16,
+                                color: isFree ? Colors.green : kBlue,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isFree ? 'Δωρεάν' : '$priceValue€',
+                                style: TextStyle(
+                                  color: isFree ? Colors.green : Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: isFree
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -251,49 +335,72 @@ class ActivityCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Action Buttons
+                  // Action Buttons / Completed Label
                   SizedBox(
                     width: double.infinity,
                     height: 45,
-                    child: isParticipant
-                        ? ElevatedButton(
-                            onPressed: () => _leave(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade700,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                            ),
-                            child: const Text(
-                              'Αποχώρηση',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        : ElevatedButton(
-                            onPressed: () => _join(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kBlue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                            ),
-                            child: const Text(
-                              'Συμμετοχή', // Join
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
+                    child: _buildActionWidget(context, isParticipant),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Builds the action button or completed label based on event status
+  Widget _buildActionWidget(BuildContext context, bool isParticipant) {
+    final isCompleted = FirebaseHelper.instance.isActivityCompleted(activity);
+
+    if (isCompleted) {
+      // Show static "Completed" label for past events - RED to stand out
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+        ),
+        child: const Center(
+          child: Text(
+            'Ολοκληρωμένο',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show join/leave buttons for upcoming events
+    if (isParticipant) {
+      return ElevatedButton(
+        onPressed: () => _leave(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey.shade700,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: const Text(
+          'Αποχώρηση',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: () => _join(context),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kBlue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      ),
+      child: const Text(
+        'Συμμετοχή',
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
       ),
     );
   }
@@ -305,6 +412,7 @@ class ActivityCard extends StatelessWidget {
         builder: (_) => ChatScreen(
           activityId: activity['id'],
           title: activity['title'] ?? 'Chat',
+          activity: activity,
         ),
       ),
     );

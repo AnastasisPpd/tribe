@@ -48,7 +48,7 @@ class DiscoverScreen extends StatelessWidget {
         ),
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: FirebaseHelper.instance.streamActivities(),
+            stream: FirebaseHelper.instance.streamUpcomingActivities(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(

@@ -133,7 +133,7 @@ class _SearchScreenState extends State<SearchScreen> {
         // Results
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: FirebaseHelper.instance.streamActivities(),
+            stream: FirebaseHelper.instance.streamUpcomingActivities(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(

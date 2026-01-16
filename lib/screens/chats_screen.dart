@@ -53,99 +53,161 @@ class ChatsScreen extends StatelessWidget {
             style: TextStyle(color: Colors.white54, fontSize: 14),
           ),
         ),
-        Expanded(
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: FirebaseHelper.instance.streamActivities(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: kBlue),
-                );
-              }
-              final allActivities = snapshot.data ?? [];
-              final activities = allActivities
-                  .where((a) => FirebaseHelper.instance.isParticipant(a))
-                  .toList();
+        Expanded(child: _ChatsBody()),
+      ],
+    );
+  }
+}
 
-              if (activities.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: kBlue.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.chat_bubble_outline,
-                            size: 48,
-                            color: kBlue,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          tr('noChats'),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          tr('joinToChat'),
-                          style: const TextStyle(
-                            color: Colors.white38,
-                            fontSize: 14,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
+/// Body widget that shows both upcoming and completed chats
+class _ChatsBody extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: FirebaseHelper.instance.streamActivities(),
+      builder: (context, allSnapshot) {
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: FirebaseHelper.instance.streamCompletedActivities(),
+          builder: (context, completedSnapshot) {
+            if (allSnapshot.connectionState == ConnectionState.waiting &&
+                completedSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: kBlue),
+              );
+            }
 
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: activities.length,
-                itemBuilder: (context, index) {
-                  final activity = activities[index];
-                  final participants = List<String>.from(
-                    activity['participants'] ?? [],
-                  );
-                  final sport = activity['sport'] ?? 'Other';
-                  final date = activity['date'] ?? '';
-                  final time = activity['time'] ?? '';
+            final allActivities = allSnapshot.data ?? [];
+            final completedActivities = completedSnapshot.data ?? [];
 
-                  return _ChatTile(
-                    activity: activity,
-                    sport: sport,
-                    participantCount: participants.length,
-                    date: date,
-                    time: time,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(
-                          activityId: activity['id'],
-                          title: activity['title'],
-                          activity: activity,
+            // Filter for my upcoming activities
+            final upcomingActivities = allActivities
+                .where(
+                  (a) =>
+                      FirebaseHelper.instance.isParticipant(a) &&
+                      !FirebaseHelper.instance.isActivityCompleted(a),
+                )
+                .toList();
+
+            // Filter for my completed activities (within 24h)
+            final myCompletedActivities = completedActivities
+                .where((a) => FirebaseHelper.instance.isParticipant(a))
+                .toList();
+
+            if (upcomingActivities.isEmpty && myCompletedActivities.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: kBlue.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.chat_bubble_outline,
+                          size: 48,
+                          color: kBlue,
                         ),
                       ),
-                    ),
-                  );
-                },
+                      const SizedBox(height: 24),
+                      Text(
+                        tr('noChats'),
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        tr('joinToChat'),
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               );
-            },
-          ),
-        ),
-      ],
+            }
+
+            return ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                // Upcoming Activities Section
+                if (upcomingActivities.isNotEmpty) ...[
+                  ...upcomingActivities.map((activity) {
+                    final participants = List<String>.from(
+                      activity['participants'] ?? [],
+                    );
+                    return _ChatTile(
+                      activity: activity,
+                      sport: activity['sport'] ?? 'Other',
+                      participantCount: participants.length,
+                      date: activity['date'] ?? '',
+                      time: activity['time'] ?? '',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            activityId: activity['id'],
+                            title: activity['title'],
+                            activity: activity,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+
+                // Completed Activities Section (within 24h retention)
+                if (myCompletedActivities.isNotEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.only(top: 24, bottom: 12),
+                    child: Text(
+                      'Ολοκληρωμένες',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ),
+                  ...myCompletedActivities.map((activity) {
+                    final participants = List<String>.from(
+                      activity['participants'] ?? [],
+                    );
+                    return _ChatTile(
+                      activity: activity,
+                      sport: activity['sport'] ?? 'Other',
+                      participantCount: participants.length,
+                      date: activity['date'] ?? '',
+                      time: activity['time'] ?? '',
+                      isCompleted: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            activityId: activity['id'],
+                            title: activity['title'],
+                            activity: activity,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -157,6 +219,7 @@ class _ChatTile extends StatelessWidget {
   final String date;
   final String time;
   final VoidCallback onTap;
+  final bool isCompleted;
 
   const _ChatTile({
     required this.activity,
@@ -165,6 +228,7 @@ class _ChatTile extends StatelessWidget {
     required this.date,
     required this.time,
     required this.onTap,
+    this.isCompleted = false,
   });
 
   @override

@@ -29,6 +29,7 @@ dependencies:
   image_picker: ^1.0.4
   google_maps_flutter: ^2.14.0
   geocoding: ^4.0.0
+  flutter_local_notifications: ^18.0.1
   
   # HTTP client for API requests
 

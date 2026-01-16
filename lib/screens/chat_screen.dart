@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // Add this import
 import '../utils/constants.dart';
 import '../firebase_helper.dart';
+import '../widgets/participants_bottom_sheet.dart';
+import '../services/notification_service.dart';
+import 'public_user_profile.dart';
 
 class ChatScreen extends StatefulWidget {
   final String activityId;
@@ -23,6 +26,21 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _msgController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Track that user is viewing this chat (suppress notifications for it)
+    NotificationService.instance.currentChatId = widget.activityId;
+  }
+
+  @override
+  void dispose() {
+    // Clear current chat tracking
+    NotificationService.instance.currentChatId = null;
+    _msgController.dispose();
+    super.dispose();
+  }
 
   void _send() {
     final text = _msgController.text.trim();
@@ -57,6 +75,15 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         backgroundColor: Colors.transparent,
+        actions: [
+          if (widget.activity != null)
+            IconButton(
+              icon: const Icon(Icons.group, color: Colors.white70),
+              tooltip: 'Συμμετέχοντες',
+              onPressed: () =>
+                  showParticipantsBottomSheet(context, widget.activity!),
+            ),
+        ],
         // Add Tribe Header if desired or keep standard back button
       ),
       body: Column(
@@ -103,27 +130,44 @@ class _ChatScreenState extends State<ChatScreen> {
                           : MainAxisAlignment.start,
                       children: [
                         if (!isMe) ...[
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.grey[800],
-                            backgroundImage:
-                                (data['senderPhotoUrl'] != null &&
-                                    (data['senderPhotoUrl'] as String)
-                                        .isNotEmpty)
-                                ? NetworkImage(data['senderPhotoUrl'] as String)
-                                : null,
-                            child:
-                                (data['senderPhotoUrl'] == null ||
-                                    (data['senderPhotoUrl'] as String).isEmpty)
-                                ? Text(
-                                    (data['senderName'] ?? '?')[0]
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : null,
+                          GestureDetector(
+                            onTap: () {
+                              final senderId = data['senderId'] as String?;
+                              if (senderId != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        PublicUserProfile(userId: senderId),
+                                  ),
+                                );
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.grey[800],
+                              backgroundImage:
+                                  (data['senderPhotoUrl'] != null &&
+                                      (data['senderPhotoUrl'] as String)
+                                          .isNotEmpty)
+                                  ? NetworkImage(
+                                      data['senderPhotoUrl'] as String,
+                                    )
+                                  : null,
+                              child:
+                                  (data['senderPhotoUrl'] == null ||
+                                      (data['senderPhotoUrl'] as String)
+                                          .isEmpty)
+                                  ? Text(
+                                      (data['senderName'] ?? '?')[0]
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : null,
+                            ),
                           ),
                           const SizedBox(width: 8),
                         ],

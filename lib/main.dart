@@ -8,12 +8,28 @@ import 'utils/constants.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/main_navigation.dart';
+import 'screens/chat_screen.dart';
+import 'services/notification_service.dart';
+import 'services/message_notification_listener.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Notification Service
+  await NotificationService.instance.init();
+
+  // Set up notification tap handler
+  NotificationService.instance.onNotificationTap = (activityId, activityTitle) {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) =>
+            ChatScreen(activityId: activityId, title: activityTitle),
+      ),
+    );
+  };
 
   runApp(const TribeApp());
 }
@@ -45,6 +61,7 @@ class _TribeAppState extends State<TribeApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Tribe',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -83,9 +100,14 @@ class _TribeAppState extends State<TribeApp> {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -97,8 +119,12 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
+          // Start message notifications when user is logged in
+          MessageNotificationListener.instance.startListening();
           return const MainNavigation();
         }
+        // Stop listening when logged out
+        MessageNotificationListener.instance.stopListening();
         return const LoginScreen();
       },
     );

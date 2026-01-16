@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// Singleton helper class for all Firebase operations
 class FirebaseHelper {
@@ -139,7 +140,37 @@ class FirebaseHelper {
 
   bool isMe(String userId) => currentUser?.uid == userId;
 
+  /// Fetch multiple profiles by their user IDs
+  Future<List<Map<String, dynamic>>> getProfilesByIds(
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return [];
+    final futures = userIds.map((id) => getProfile(userId: id));
+    final results = await Future.wait(futures);
+    return results.whereType<Map<String, dynamic>>().toList();
+  }
+
   // ==================== ACTIVITIES ====================
+
+  /// Parse date (DD/MM/YYYY) and time (HH:mm) strings into DateTime
+  DateTime? _parseScheduledDateTime(String? dateStr, String? timeStr) {
+    if (dateStr == null || timeStr == null) return null;
+    try {
+      final dateParts = dateStr.split('/');
+      final timeParts = timeStr.split(':');
+      if (dateParts.length >= 3 && timeParts.length >= 2) {
+        return DateTime(
+          int.parse(dateParts[2]), // year
+          int.parse(dateParts[1]), // month
+          int.parse(dateParts[0]), // day
+          int.parse(timeParts[0]), // hour
+          int.parse(timeParts[1]), // minute
+        );
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<String> createActivity(Map<String, dynamic> data) async {
     final user = currentUser;
     if (user == null) throw Exception('Must be logged in');
@@ -156,6 +187,15 @@ class FirebaseHelper {
     }
     data['participants'] = [user.uid]; // Creator auto-joins
     data['createdAt'] = FieldValue.serverTimestamp();
+
+    // Compute scheduledDateTime from date and time strings
+    final scheduledDt = _parseScheduledDateTime(
+      data['date'] as String?,
+      data['time'] as String?,
+    );
+    if (scheduledDt != null) {
+      data['scheduledDateTime'] = Timestamp.fromDate(scheduledDt);
+    }
 
     final docRef = await _activities.add(data);
     return docRef.id;
@@ -175,6 +215,7 @@ class FirebaseHelper {
   // Alias for getAllActivities
   Future<List<Map<String, dynamic>>> getActivities() => getAllActivities();
 
+  /// Stream all activities (unfiltered, for internal use)
   Stream<List<Map<String, dynamic>>> streamActivities() {
     return _activities
         .orderBy('createdAt', descending: true)
@@ -188,15 +229,83 @@ class FirebaseHelper {
         );
   }
 
+  /// Stream only upcoming activities (scheduledDateTime >= now)
+  Stream<List<Map<String, dynamic>>> streamUpcomingActivities() {
+    final now = DateTime.now();
+    return _activities
+        .where(
+          'scheduledDateTime',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(now),
+        )
+        .orderBy('scheduledDateTime', descending: false)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            data['id'] = doc.id;
+            return data;
+          }).toList(),
+        );
+  }
+
+  /// Stream completed activities within 24-hour retention window
+  /// Condition: (now - 24h) < scheduledDateTime < now
+  Stream<List<Map<String, dynamic>>> streamCompletedActivities() {
+    final now = DateTime.now();
+    final cutoff = now.subtract(const Duration(hours: 24));
+    return _activities
+        .where('scheduledDateTime', isGreaterThan: Timestamp.fromDate(cutoff))
+        .where('scheduledDateTime', isLessThan: Timestamp.fromDate(now))
+        .orderBy('scheduledDateTime', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            data['id'] = doc.id;
+            return data;
+          }).toList(),
+        );
+  }
+
   Future<void> updateActivity(String id, Map<String, dynamic> data) async {
     data['updatedAt'] = FieldValue.serverTimestamp();
+
+    // Recompute scheduledDateTime if date or time is being updated
+    if (data.containsKey('date') || data.containsKey('time')) {
+      // Fetch current values if partial update
+      String? dateStr = data['date'] as String?;
+      String? timeStr = data['time'] as String?;
+
+      if (dateStr == null || timeStr == null) {
+        final doc = await _activities.doc(id).get();
+        if (doc.exists) {
+          final existing = doc.data() as Map<String, dynamic>;
+          dateStr ??= existing['date'] as String?;
+          timeStr ??= existing['time'] as String?;
+        }
+      }
+
+      final scheduledDt = _parseScheduledDateTime(dateStr, timeStr);
+      if (scheduledDt != null) {
+        data['scheduledDateTime'] = Timestamp.fromDate(scheduledDt);
+      }
+    }
+
     await _activities.doc(id).update(data);
   }
 
   Future<void> deleteActivity(String id) async {
-    await _activities.doc(id).delete();
-    // Also delete associated chat
+    // Delete all messages in the chat subcollection first
+    final messagesSnapshot = await _chats.doc(id).collection('messages').get();
+    final batch = _firestore.batch();
+    for (final doc in messagesSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+
+    // Delete the chat document and activity
     await _chats.doc(id).delete();
+    await _activities.doc(id).delete();
   }
 
   Future<bool> joinActivity(String activityId) async {
@@ -230,6 +339,45 @@ class FirebaseHelper {
     final user = currentUser;
     if (user == null) return false;
     return activity['creatorId'] == user.uid;
+  }
+
+  /// Check if an activity is completed (scheduledDateTime has passed)
+  bool isActivityCompleted(Map<String, dynamic> activity) {
+    final scheduledDateTime = activity['scheduledDateTime'];
+    if (scheduledDateTime == null) {
+      // Fallback: parse from date/time strings
+      final dt = _parseScheduledDateTime(
+        activity['date'] as String?,
+        activity['time'] as String?,
+      );
+      if (dt == null) return false;
+      return dt.isBefore(DateTime.now());
+    }
+    if (scheduledDateTime is Timestamp) {
+      return scheduledDateTime.toDate().isBefore(DateTime.now());
+    }
+    return false;
+  }
+
+  /// Clean up expired activities (scheduledDateTime < now - 24 hours)
+  /// This deletes the activity and all associated chat messages
+  Future<int> cleanupExpiredActivities() async {
+    final cutoff = DateTime.now().subtract(const Duration(hours: 24));
+    final snapshot = await _activities
+        .where('scheduledDateTime', isLessThan: Timestamp.fromDate(cutoff))
+        .get();
+
+    int deletedCount = 0;
+    for (final doc in snapshot.docs) {
+      try {
+        await deleteActivity(doc.id);
+        deletedCount++;
+      } catch (e) {
+        // Log error but continue with other deletions
+        debugPrint('Failed to delete activity ${doc.id}: $e');
+      }
+    }
+    return deletedCount;
   }
 
   // ==================== CHAT ====================

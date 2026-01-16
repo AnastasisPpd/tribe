@@ -27,13 +27,13 @@ class AppLocalization extends ChangeNotifier {
           'Ποδόσφαιρο',
           'Μπάσκετ',
           'Τένις',
-          'Running',
+          'Τρέξιμο',
           'Βόλεϊ',
           'Padel',
-          'Gym',
-          'Cycling',
-          'Swimming',
-          'Yoga',
+          'Γυμναστική',
+          'Ποδηλασία',
+          'Κολύμβυση',
+          'Γιόγκα',
           'Άλλο',
         ]
       : [
@@ -55,13 +55,13 @@ class AppLocalization extends ChangeNotifier {
     'Football': 'Ποδόσφαιρο',
     'Basketball': 'Μπάσκετ',
     'Tennis': 'Τένις',
-    'Running': 'Running',
+    'Running': 'Τρέξιμο',
     'Volleyball': 'Βόλεϊ',
     'Padel': 'Padel',
-    'Gym': 'Gym',
-    'Cycling': 'Cycling',
-    'Swimming': 'Swimming',
-    'Yoga': 'Yoga',
+    'Gym': 'Γυμναστική',
+    'Cycling': 'Ποδηλασία',
+    'Swimming': 'Κολύμβυση',
+    'Yoga': 'Γιόγκα',
     'Other': 'Άλλο',
   };
   static const Map<String, String> _sportElToEn = {
@@ -125,6 +125,7 @@ class AppLocalization extends ChangeNotifier {
       'chat': 'Chat',
       'search': 'Search',
       'profile': 'Profile',
+      'chats': 'Chats',
 
       // Discover
       'discoverActivities': 'Ανακάλυψε Δραστηριότητες',
@@ -252,6 +253,7 @@ class AppLocalization extends ChangeNotifier {
       'chat': 'Chat',
       'search': 'Search',
       'profile': 'Profile',
+      'chats': 'Chats',
 
       // Discover
       'discoverActivities': 'Discover Activities',
